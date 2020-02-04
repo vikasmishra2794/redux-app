@@ -2,6 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const https = require('https');
+const axios = require('axios');
 
 const app = express();
 const port = 8080;
@@ -16,24 +17,26 @@ app.use(bodyParser.json());
 
 app.get('/weather', async (req, res) => {
     const { zipCode } = req.query;
-    console.log("Inside of fun", zipCode);
-    https.get(`https://weather.cit.api.here.com/weather/1.0/report.json?product=observation&zipcode=${zipCode}&oneobservation=true&app_id=${appID}&app_code=${appCode}`, (resp) => {
-        let data = '';
-
-        // A chunk of data has been recieved.
-        resp.on('data', (chunk) => {
-            data += chunk;
+    axios.get(`https://weather.cit.api.here.com/weather/1.0/report.json?product=observation&zipcode=${zipCode}&oneobservation=true&app_id=${appID}&app_code=${appCode}`)
+        .then(resp => {
+            // console.log(resp.data);
+            res.send(resp.data);
+        }).catch(err => {
+            console.log("Error: " + err.message);
         });
-
-        // The whole response has been received. Print out the result.
-        resp.on('end', () => {
-            console.log(JSON.parse(data));
-            res.send(JSON.parse(data));
-        });
-
-    }).on("error", (err) => {
-        console.log("Error: " + err.message);
+});
+// app.get('/vikas', ()=> {})
+app.get('/weather/multiple_city', async (req, res) => {
+    const { zipCodeList = [10025, 23060] } = req.query;
+    let apiPromiseList = zipCodeList.map((zipCode) => {
+        return axios.get(`https://weather.cit.api.here.com/weather/1.0/report.json?product=observation&zipcode=${zipCode}&oneobservation=true&app_id=${appID}&app_code=${appCode}`)
     });
+    // console.log("apiPromiseList:===", apiPromiseList)
+    axios.all(apiPromiseList)
+        .then((apiResponseList) => {
+            // console.log(apiResponseList);
+            res.send(apiResponseList);
+        })
 });
 
 app.listen(port, () => console.log(`listening on port ${port}!`));

@@ -32,7 +32,7 @@ class App extends Component {
     super(props);
     this.state = {
       selectedOption: null,
-      error:""
+      error:"test"
     };
     this.cityList = [
       { label: "New York", zipCode: "10025" },
